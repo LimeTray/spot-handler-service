@@ -64,7 +64,7 @@ func (n Notice) ExecuteDrain(hostname string) {
 	}
 
 	// kubectl --kubeconfig /var/lib/kubelet/kubeconfig drain node_name
-	command := fmt.Sprintf("kubectl --kubeconfig %s  drain %s", kubeConfig, hostname)
+	command := fmt.Sprintf("kubectl --kubeconfig %s  drain %s --ignore-daemonsets", kubeConfig, hostname)
 	// command := "sleep 10 && echo 'done'"
 	Logger.Info("executing:" + command)
 	notification.Notify(fmt.Sprintf(
