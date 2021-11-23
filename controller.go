@@ -20,14 +20,16 @@ func healthCtrl(c *gin.Context) {
 func spotNoticeCtrl(c *gin.Context) {
 	messageType := c.Request.Header.Get("x-amz-sns-message-type")
 	Logger.Info(fmt.Sprintf("incomming request with messageType: %s", messageType))
-	// if it is a confirmation reques the send confirmed
-	if messageType == "SubscriptionConfirmation" {
-		c.String(http.StatusOK, "Confirmed")
-		return
-	}
+
 	defer c.Request.Body.Close()
 	body, _ := ioutil.ReadAll(c.Request.Body)
 	Logger.Info(string(body))
+
+	// if it is a confirmation reques the send confirmed
+	if messageType == "SubscriptionConfirmation" {
+		c.String(http.StatusOK, "Confirmed"	)
+		return
+	}
 
 	// If an actual notification
 	var message SNSMessage
