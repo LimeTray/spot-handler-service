@@ -7,7 +7,7 @@ For now we will be using kubectl to drain node
 
 Steps:
 - Register cloudwatch event for spot interruption
-- Mark target as sns for notification
+- Mark target as sns for notification, Add notice url to sns and check for incomming request log. use confirmation link from message body gor confirmation
 - Subscribe http call to service. Can depend on sqs as this might delay the request. 
 - Use notice api to confirm request and process notification
 - To enable kubectl on pod, allow access to kube config from node and install kubectl on pod   

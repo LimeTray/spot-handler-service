@@ -27,27 +27,27 @@ func spotNoticeCtrl(c *gin.Context) {
 
 	// if it is a confirmation reques the send confirmed
 	if messageType == "SubscriptionConfirmation" {
-		c.String(http.StatusOK, "Confirmed"	)
+		c.String(http.StatusOK, "Confirmed")
 		return
 	}
 
 	// If an actual notification
-	var message SNSMessage
-	var notice Notice
+	var message Notice
+	// var notice Notice
 
 	if err := json.Unmarshal(body, &message); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	notice = message.Message
-	i := notice.GetInstanceId()
+	// notice = message.Message
+	i := message.GetInstanceId()
 	hostname, err := getHostNameByInstanceId(i)
 	if err != nil {
 		Logger.Error(err.Error())
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	notice.ExecuteDrain(hostname)
+	message.ExecuteDrain(hostname)
 	c.String(http.StatusOK, hostname)
 }
