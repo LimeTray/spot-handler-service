@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -101,6 +102,7 @@ func (sc SlackClient) SendJobNotification(job SlackJobNotification) error {
 }
 
 func (sc SlackClient) SendInfo(message string, options ...string) (err error) {
+	fmt.Println("sending slack notification: " + message)
 	return sc.funcName("good", message, options)
 }
 
