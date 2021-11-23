@@ -102,12 +102,13 @@ func (sc SlackClient) SendJobNotification(job SlackJobNotification) error {
 }
 
 func (sc SlackClient) SendInfo(message string, options ...string) (err error) {
-	fmt.Println("sending slack notification: " + message)
 	return sc.funcName("good", message, options)
 }
 
 func (sc SlackClient) sendHttpRequest(slackRequest SlackMessage) error {
 	slackBody, _ := json.Marshal(slackRequest)
+	msg := fmt.Sprintf("curl -XPOST %s -H 'content-type:application/json' -d '%s'", sc.WebHookUrl, string(slackBody))
+	fmt.Println(msg)
 	req, err := http.NewRequest(http.MethodPost, sc.WebHookUrl, bytes.NewBuffer(slackBody))
 	if err != nil {
 		return err
