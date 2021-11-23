@@ -18,8 +18,13 @@ func routes(r *gin.Engine) {
 }
 func server() *gin.Engine {
 	// create server
-	r := gin.Default()
-	return r
+	// r := gin.Default()
+	router := gin.New()
+	router.Use(
+		gin.LoggerWithWriter(gin.DefaultWriter, "/health"),
+		gin.Recovery(),
+	)
+	return router
 }
 
 func main() {
