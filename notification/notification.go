@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 )
@@ -136,9 +135,9 @@ func (sc SlackClient) sendHttpRequest(slackRequest SlackMessage) error {
 
 func Notify(msg string) {
 	sc := &SlackClient{
-		WebHookUrl: Getenv(os.Getenv("SLACK_URL"), DEFAIULT_SLACK_URL),
-		UserName:   Getenv(os.Getenv("SLACK_USERNAME"), DEFAIULT_SLACK_USERNAME),
-		Channel:    Getenv(os.Getenv("SLACK_CHANNEL"), DEFAIULT_SLACK_CHANNEL),
+		WebHookUrl: Getenv("SLACK_URL", DEFAIULT_SLACK_URL),
+		UserName:   Getenv("SLACK_USERNAME", DEFAIULT_SLACK_USERNAME),
+		Channel:    Getenv("SLACK_CHANNEL", DEFAIULT_SLACK_CHANNEL),
 		TimeOut:    DefaultSlackTimeout,
 	}
 	sc.SendInfo(msg)

@@ -1,6 +1,8 @@
 package notification
 
-import "os"
+import (
+	"os"
+)
 
 var (
 	DEFAIULT_SLACK_URL      string = "https://hooks.slack.com/services/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"
