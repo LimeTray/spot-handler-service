@@ -19,18 +19,18 @@ Steps:
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  annotations:    
+  annotations:
   labels:
     app: spot-handler-service
     group: infra
     owner: shubham
     tier: backend
   name: spot-handler-service
-  namespace: production  
+  namespace: production
 spec:
   minReadySeconds: 10
   progressDeadlineSeconds: 600
-  replicas: 1
+  replicas: 2
   revisionHistoryLimit: 5
   selector:
     matchLabels:
@@ -40,8 +40,8 @@ spec:
       tier: backend
   strategy:
     rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
+      maxSurge: 0
+      maxUnavailable: 1
     type: RollingUpdate
   template:
     metadata:
@@ -58,6 +58,14 @@ spec:
         tier: backend
     spec:
       affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kops.k8s.io/instance-life-cycle
+                operator: NotIn
+                values:
+                - spot
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
           - podAffinityTerm:
@@ -68,16 +76,15 @@ spec:
                   values:
                   - spot-handler-service
               topologyKey: kubernetes.io/hostname
-            weight: 99
-          - podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: app
-                  operator: In
-                  values:
-                  - spot-handler-service
-              topologyKey: kops.k8s.io/instance-life-cycle
             weight: 100
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - spot-handler-service
+            topologyKey: kubernetes.io/hostname
       containers:
       - env:
         - name: ENDPOINTS_HEALTH_ENABLED
@@ -107,13 +114,11 @@ spec:
         - name: ENDPOINTS_ERROR_ENABLED
           value: "false"
         - name: MANAGEMENT_HEALTH_DEFAULTS_ENABLED
-          value: "false"
-        - name: LT_UTILS_AUTH_SERVICE
-          value: http://people-service
+          value: "false"        
         - name: K8S_SERVICE_NAME
           value: spot-handler-service
         - name: GET_HOSTS_FROM
-          value: dns
+          value: dns        
         - name: AWS_ACCESS_KEY_ID
           valueFrom:
             secretKeyRef:
@@ -131,7 +136,14 @@ spec:
               name: limetray-aws-readonly
         - name: KUBECTL_CONFIG
           value: /var/lib/kubelet/kubeconfig
-        image: 445897275450.dkr.ecr.ap-southeast-1.amazonaws.com/spot-handler-service:master.1.0.0.b5-1637604661818
+        - name: GIN_MODE
+          value: release
+        - name: SLACK_URL
+          valueFrom:
+            secretKeyRef:
+              key: url
+              name: limetray-slack
+        image: 445897275450.dkr.ecr.ap-southeast-1.amazonaws.com/spot-handler-service:master.1.0.0.b20-1637744094934
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 30
@@ -176,6 +188,19 @@ spec:
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 60
+      tolerations:
+      - effect: NoSchedule
+        key: dedicated
+        operator: Equal
+        value: nodes-compute
+      - effect: NoSchedule
+        key: dedicated
+        operator: Equal
+        value: cpos-nodes
+      - effect: NoSchedule
+        key: dedicated
+        operator: Equal
+        value: platform-nodes
       volumes:
       - hostPath:
           path: /var/lib/kubelet/kubeconfig
