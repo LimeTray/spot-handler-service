@@ -50,13 +50,15 @@ func (n Notice) GetInstanceAction() string {
 	return n.Detail.InstanceAction
 }
 
-func (n Notice) ExecuteDrain(hostname string) {
+func (n Notice) ExecuteDrain(hostname string, name string) {
 	Logger.Info(fmt.Sprintf(
-		"Executing node drain for instance %s hostname %s on request id %s for action %s",
+		"Executing node drain for instance %s hostname %s on request id %s for action %s Tag name: %s",
 		n.GetInstanceId(),
 		hostname,
 		n.GetRequestId(),
-		n.GetInstanceAction()))
+		n.GetInstanceAction(),
+		name,
+	))
 
 	kubeConfig := "/var/lib/kubelet/kubeconfig"
 	if os.Getenv("KUBECTL_CONFIG") != "" {
@@ -68,10 +70,11 @@ func (n Notice) ExecuteDrain(hostname string) {
 	// command := "sleep 10 && echo 'done'"
 	Logger.Info("executing:" + command)
 	notification.Notify(fmt.Sprintf(
-		"Executing Command: %s\nRequested for instance id: %s\nRequest id %s",
+		"Executing Command: %s\nRequested for instance id: %s\nRequest id %s \nNode name: %s",
 		command,
 		n.GetInstanceId(),
 		n.GetRequestId(),
+		name,
 	))
 	cmd := exec.Command("sh", "-c", command)
 	if err := cmd.Start(); err != nil {

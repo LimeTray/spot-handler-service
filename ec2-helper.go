@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -53,11 +54,29 @@ func getEC2MetaByInstanceId(instanceId string) (*ec2.Instance, error) {
 	return result.Reservations[0].Instances[0], nil
 }
 
-func getHostNameByInstanceId(instanceId string) (string, error) {
+func GetHostNameByInstanceId(instanceId string) (string, error) {
 	Logger.Info("Getting instance details for " + instanceId)
 	if i, err := getEC2MetaByInstanceId(instanceId); err != nil {
 		return "", err
 	} else {
 		return *i.PrivateDnsName, nil
 	}
+}
+
+func GetHostnameByInstance(instance *ec2.Instance) string {
+	return *instance.PrivateDnsName
+}
+
+func GetTagNameByInstance(instance *ec2.Instance) string {
+	name := ""
+	tags := instance.Tags
+	if len(tags) > 0 {
+		for _, t := range tags {
+			if strings.ToLower(*t.Key) == "name" {
+				name = *t.Value
+				break
+			}
+		}
+	}
+	return name
 }

@@ -42,12 +42,19 @@ func spotNoticeCtrl(c *gin.Context) {
 
 	// notice = message.Message
 	i := message.GetInstanceId()
-	hostname, err := getHostNameByInstanceId(i)
+	instance, err := getEC2MetaByInstanceId(i)
 	if err != nil {
 		Logger.Error(err.Error())
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	message.ExecuteDrain(hostname)
+	hostname := GetHostnameByInstance(instance)
+	name := GetTagNameByInstance(instance)
+	if err != nil {
+		Logger.Error(err.Error())
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+	message.ExecuteDrain(hostname, name)
 	c.String(http.StatusOK, hostname)
 }
