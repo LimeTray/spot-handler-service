@@ -31,16 +31,13 @@ func spotNoticeCtrl(c *gin.Context) {
 		return
 	}
 
-	// If an actual notification
 	var message Notice
-	// var notice Notice
 
 	if err := json.Unmarshal(body, &message); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// notice = message.Message
 	i := message.GetInstanceId()
 	instance, err := getEC2MetaByInstanceId(i)
 	if err != nil {
@@ -48,13 +45,11 @@ func spotNoticeCtrl(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	hostname := GetHostnameByInstance(instance)
-	name := GetTagNameByInstance(instance)
 	if err != nil {
 		Logger.Error(err.Error())
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	message.ExecuteDrain(hostname, name)
-	c.String(http.StatusOK, hostname)
+	message.ExecuteDrain(instance)
+	c.String(http.StatusOK, "Request submitted")
 }

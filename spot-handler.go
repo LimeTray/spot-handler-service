@@ -9,6 +9,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 type SNSMessage struct {
@@ -50,14 +52,25 @@ func (n Notice) GetInstanceAction() string {
 	return n.Detail.InstanceAction
 }
 
-func (n Notice) ExecuteDrain(hostname string, name string) {
+func (n Notice) terminateInstance() error {
+	Logger.Info("Terminating instance %s", n.GetInstanceId())
+	return TerminateInstance(n.GetInstanceId())
+}
+
+func (n Notice) ExecuteDrain(instance *ec2.Instance) {
+	// var wg sync.WaitGroup
+	hostname := GetHostnameByInstance(instance)
+	name := GetTagNameByInstance(instance)
+	asg := GetASGByInstance(instance)
+
 	Logger.Info(fmt.Sprintf(
-		"Executing node drain for instance %s hostname %s on request id %s for action %s Tag name: %s",
+		"Executing node drain for instance %s hostname %s on request id %s for action %s Tag name: %s ASG: %s",
 		n.GetInstanceId(),
 		hostname,
 		n.GetRequestId(),
 		n.GetInstanceAction(),
 		name,
+		asg,
 	))
 
 	kubeConfig := "/var/lib/kubelet/kubeconfig"
@@ -67,16 +80,18 @@ func (n Notice) ExecuteDrain(hostname string, name string) {
 
 	// kubectl --kubeconfig /var/lib/kubelet/kubeconfig drain node_name
 	command := fmt.Sprintf("sleep 2m && kubectl --kubeconfig %s  drain %s --ignore-daemonsets --delete-local-data", kubeConfig, hostname)
+	// command := "echo 'done'"
 	additonalArguments := os.Getenv("KUBECTL_ARGS")
 	command = fmt.Sprintf("%s %s", command, additonalArguments)
-	// command := "sleep 10 && echo 'done'"
+
 	Logger.Info("executing:" + command)
 	notification.Notify(fmt.Sprintf(
-		"Executing Command: %s\nRequested for instance id: %s\nRequest id %s \nNode name: %s",
+		"Executing Command: %s\nRequested for instance id: %s\nRequest id %s \nNode name: %s\nASG: %s",
 		command,
 		n.GetInstanceId(),
 		n.GetRequestId(),
 		name,
+		asg,
 	))
 	cmd := exec.Command("sh", "-c", command)
 	if err := cmd.Start(); err != nil {
@@ -86,8 +101,21 @@ func (n Notice) ExecuteDrain(hostname string, name string) {
 	pid := cmd.Process.Pid
 
 	Logger.Info("Command running with pid: " + strconv.Itoa(pid))
+	// wg.Add(1)
 	go func() {
+		// defer wg.Done()
 		err := cmd.Wait()
-		Logger.Info(fmt.Sprintf("Command finished with error: %v", err))
+		if err == nil {
+			Logger.Info(fmt.Sprintf("Command %s executed succesfully", command))
+			if err = n.terminateInstance(); err != nil {
+				Logger.Info(fmt.Sprintf("Error terminating instance %s %v",
+					n.GetInstanceId(),
+					err,
+				))
+			}
+		} else {
+			Logger.Error(fmt.Sprintf("Error executing command %s '%v'", command, err))
+		}
 	}()
+	// wg.Wait()
 }

@@ -1,7 +1,9 @@
 package main
 
 import (
+	"Shubhamnegi/spot-handler-service/notification"
 	"errors"
+	"fmt"
 	"os"
 	"strings"
 
@@ -67,16 +69,42 @@ func GetHostnameByInstance(instance *ec2.Instance) string {
 	return *instance.PrivateDnsName
 }
 
-func GetTagNameByInstance(instance *ec2.Instance) string {
-	name := ""
+func getTagValueByInstace(instance *ec2.Instance, key string) string {
+	val := ""
 	tags := instance.Tags
 	if len(tags) > 0 {
 		for _, t := range tags {
-			if strings.ToLower(*t.Key) == "name" {
-				name = *t.Value
+			if strings.ToLower(*t.Key) == strings.ToLower(key) {
+				val = *t.Value
 				break
 			}
 		}
 	}
-	return name
+	return val
+}
+
+func GetTagNameByInstance(instance *ec2.Instance) string {
+	return getTagValueByInstace(instance, "name")
+}
+
+func GetASGByInstance(instance *ec2.Instance) string {
+	return getTagValueByInstace(instance, "aws:autoscaling:groupName")
+}
+
+func TerminateInstance(instanceId string) error {
+	notification.Notify(fmt.Sprintf(
+		"Terminating instance %s",
+		instanceId,
+	))
+	svc := ec2.New(AWS_Session)
+	input := &ec2.TerminateInstancesInput{
+		InstanceIds: []*string{
+			aws.String(instanceId),
+		},
+	}
+	if _, err := svc.TerminateInstances(input); err != nil {
+		return err
+	} else {
+		return nil
+	}
 }
