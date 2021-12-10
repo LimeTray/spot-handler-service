@@ -58,7 +58,7 @@ func TestSpotHandler(t *testing.T) {
 	t.Run("Process Notice", func(t *testing.T) {
 		rr := httptest.NewRecorder()
 
-		body := strings.NewReader("{\n  \"version\": \"0\",\n  \"id\": \"9266de61-51b0-fc39-708c-375a6d3a1f8c\",\n  \"detail-type\": \"EC2 Spot Instance Interruption Warning\",\n  \"source\": \"aws.ec2\",\n  \"account\": \"445897275450\",\n  \"time\": \"2021-11-23T00:48:56Z\",\n  \"region\": \"ap-southeast-1\",\n  \"resources\": [\"arn:aws:ec2:ap-southeast-1a:instance/i-0304d135869101ad3\"],\n  \"detail\": {\n    \"instance-id\": \"i-0b0e66771912e1932\"}\n}")
+		body := strings.NewReader("{\n  \"version\": \"0\",\n  \"id\": \"9266de61-51b0-fc39-708c-375a6d3a1f8c\",\n  \"detail-type\": \"EC2 Spot Instance Interruption Warning\",\n  \"source\": \"aws.ec2\",\n  \"account\": \"445897275450\",\n  \"time\": \"2021-11-23T00:48:56Z\",\n  \"region\": \"ap-southeast-1\",\n  \"resources\": [\"arn:aws:ec2:ap-southeast-1a:instance/i-0304d135869101ad3\"],\n  \"detail\": {\n    \"instance-id\": \"i-04ea7231ac1611e3a\"}\n}")
 		request, err := http.NewRequest("POST", "/api/v1/notice", body)
 		request.Header.Set("x-amz-sns-message-type", "Notification")
 		assert.NoError(t, err)
