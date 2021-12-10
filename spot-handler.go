@@ -67,6 +67,7 @@ func (n Notice) GetInstanceAction() string {
 }
 
 func (n Notice) terminateInstance() error {
+	time.Sleep(30 * time.Second)
 	Logger.Info("Terminating instance %s", n.GetInstanceId())
 	return TerminateInstance(n.GetInstanceId())
 }
