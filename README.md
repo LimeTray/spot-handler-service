@@ -13,6 +13,13 @@ Steps:
 - To enable kubectl on pod, allow access to kube config from node and install kubectl on pod   
 - Shedule pod on ondemand machine
 
+# Handle Termination lifecycle hooks
+
+AWS allow lifecycle hooks, which can be used to act during scaling activity. We are making use of termination hook to drain and delet node from cluster
+
+- Resiter termination lifecycle hook to SNS
+- Register sns to webhook for spot-handler-service
+
 
 # Sample deployment yaml
 ```
