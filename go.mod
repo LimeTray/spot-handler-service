@@ -3,7 +3,7 @@ module Shubhamnegi/spot-handler-service
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go v1.42.9 // indirect
+	github.com/aws/aws-sdk-go v1.42.25 // indirect
 	github.com/bhoriuchi/go-bunyan v0.0.0-20170831222709-8815b5fdce8c // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect

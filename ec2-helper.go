@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
@@ -74,7 +76,7 @@ func getTagValueByInstace(instance *ec2.Instance, key string) string {
 	tags := instance.Tags
 	if len(tags) > 0 {
 		for _, t := range tags {
-			if strings.ToLower(*t.Key) == strings.ToLower(key) {
+			if strings.EqualFold(strings.ToLower(*t.Key), strings.ToLower(key)) {
 				val = *t.Value
 				break
 			}
@@ -91,7 +93,12 @@ func GetASGByInstance(instance *ec2.Instance) string {
 	return getTagValueByInstace(instance, "aws:autoscaling:groupName")
 }
 
-func TerminateInstance(instanceId string) error {
+func GetClusterByInstance(instance *ec2.Instance) string {
+	return getTagValueByInstace(instance, "KubernetesCluster")
+}
+
+func TerminateInstance(instanceId string, sleepInterval time.Duration) error {
+	time.Sleep(sleepInterval)
 	notification.Notify(fmt.Sprintf(
 		"Terminating instance %s",
 		instanceId,
@@ -106,5 +113,27 @@ func TerminateInstance(instanceId string) error {
 		return err
 	} else {
 		return nil
+	}
+}
+
+func SendContinueEvent(lifecycleEvent *LifecycleEvent) {
+	notification.Notify(fmt.Sprintf(
+		"sending continue event for instanceId %s",
+		lifecycleEvent.GetEC2InstanceID(),
+	))
+
+	svc := autoscaling.New(AWS_Session)
+	if _, err := svc.CompleteLifecycleAction(&autoscaling.CompleteLifecycleActionInput{
+		LifecycleHookName:     aws.String(lifecycleEvent.GetLifecycleHookName()),
+		AutoScalingGroupName:  aws.String(lifecycleEvent.GetAutoScalingGroupName()),
+		LifecycleActionToken:  aws.String(lifecycleEvent.GetLifecycleActionToken()),
+		LifecycleActionResult: aws.String("CONTINUE"),
+	}); err != nil {
+		Logger.Error(fmt.Sprintf("Error sending continue event %s %v",
+			lifecycleEvent.GetEC2InstanceID(),
+			err,
+		))
+	} else {
+		Logger.Info("Continue event sent for instnace id: " + lifecycleEvent.GetEC2InstanceID())
 	}
 }
